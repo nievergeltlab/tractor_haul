@@ -48,9 +48,9 @@
  mkdir -p "$WORKING_DIR"/"$study"/"$study"_"$refpanel"/plots
  
 #Makes a shortcut to where the PLINK format data is stored (otherwise, if you aren't storing your data somewhere else)
- ln -s /home/pgcdac/DWFV2CJb8Piv_0116_pgc_data/pts/wave3/v1/"$study"/cobg_dir_genome_wide/pts_"$study"_mix_am-qc.hg19.ch.fl.bg.bed "$study"/"$study"_bg_cogb.bed 
- ln -s /home/pgcdac/DWFV2CJb8Piv_0116_pgc_data/pts/wave3/v1/"$study"/cobg_dir_genome_wide/pts_"$study"_mix_am-qc.hg19.ch.fl.bg.bim "$study"/"$study"_bg_cogb.bim 
- ln -s /home/pgcdac/DWFV2CJb8Piv_0116_pgc_data/pts/wave3/v1/"$study"/cobg_dir_genome_wide/pts_"$study"_mix_am-qc.hg19.ch.fl.bg.fam "$study"/"$study"_bg_cogb.fam
+ ln -s data_path/study.bed "$study"/"$study"_bg_cogb.bed 
+ ln -s data_path/study.bim "$study"/"$study"_bg_cogb.bim 
+ ln -s data_path/study.fam "$study"/"$study"_bg_cogb.fam
 
 #Identify the ambiguous alleles. These will be excluded!
  grep -P "A\tT" "$study"/"$study"_bg_cogb.bim  > "$study"/ambiguous_snps.txt
@@ -65,7 +65,7 @@
  sbatch --array=1-22 --time=03:05:00 --error errandout/phase_"$study".e_%a --output errandout/phase_"$study".o_%a  --export=ALL,study="$study",eagle="$eagle"  1X_phasing_v2.sh -D $WORKING_DIR 
 
 #Run XGmix. DO NOT RUN until previous job completes!
- sbatch --array=15-22 --time=02:00:00 --error errandout/xgmix_"$study"_"$refpanel".e_%j_%a --output errandout/xgmix_"$study"_"$refpanel".o_%j_%a   --export=ALL,study="$study",refpanel=$refpanel,WORKING_DIR="$WORKING_DIR" 2X_xgmix_run.sh  -D $WORKING_DIR 
+ sbatch --array=1-22 --time=02:00:00 --error errandout/xgmix_"$study"_"$refpanel".e_%j_%a --output errandout/xgmix_"$study"_"$refpanel".o_%j_%a   --export=ALL,study="$study",refpanel=$refpanel,WORKING_DIR="$WORKING_DIR" 2X_xgmix_run.sh  -D $WORKING_DIR 
 
 #Plot local ancestry of subjects. DO NOT RUN until previous job completes!
  sbatch  --time=01:00:00 --error errandout/lancplot_"$study"_"$refpanel".e_%j_%a --output errandout/lancplot_"$study"_"$refpanel".o_%j_%a   --export=ALL,study="$study",refpanel=$refpanel,WORKING_DIR="$WORKING_DIR" 3X_lanc_helper.sh  -D $WORKING_DIR 
