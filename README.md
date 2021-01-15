@@ -23,7 +23,8 @@ This will generate a local ancestry panel, these will have to be copied into the
      
 ### Other Usage Notes:  
 
-The pipeline is a bit primitive, and is probably more of an example than a push button interface
+The pipeline is a bit primitive, and is for most will be a hackable example rather than a push button interface  
+
   A) jobs are not automatically resubmitted if failed.  
   B) There is no job dependency programmed in, you have to manually check if a job finished before proceeding to the next step  
   C) You will have to go into the job scripts to set certain paths
