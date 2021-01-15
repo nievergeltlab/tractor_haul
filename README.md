@@ -4,10 +4,12 @@ last rev Jan 15, 2021
 
 # Overview  
 ## 0) Install XGmix. 
-     Follow steps in 00_xgmix_install.sh  
+   Follow steps in 00_xgmix_install.sh  
      
 ## 1) Create a panel for local ancestry inference using XGmix and a PHASED vcf of reference subjects with KNOWN population origins.  
-Follow instructions in 01_train_xgmix.sh. This will generate a local ancestry panel, these will have to be copied into the reference panel folder (see code). Additional program settings that control the simulation and model calibration can be found in XGMix-master/config.py. It may be important to pay attention to these!  
+Follow instructions in 01_train_xgmix.sh. 
+
+This will generate a local ancestry panel, these will have to be copied into the reference panel folder (see code). Additional program settings that control the simulation and model calibration can be found in XGMix-master/config.py. It may be important to pay attention to these!  
      
    It is VERY important to note the following  :  
      A) the reference and test datasets MUST be on the same genome build  
