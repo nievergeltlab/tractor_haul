@@ -30,7 +30,7 @@ The pipeline is a bit primitive, and is for most will be a hackable example rath
   C) You will have to go into the job scripts to set certain paths
   
 #### SLURM: 
- This assumes that you have access to a SLURM computing system (eg LISA) and access to the HRC reference panel  
+ This assumes that you have access to a SLURM computing system (eg LISA) 
 
 ##### If you do not have SLURM:  
    Run the contents of the job script commands in the shell. Because chromosomes are by default indexed by the array index number, you will have to create a for loop to replace the array indexing variable. ie. 
@@ -39,14 +39,14 @@ The pipeline is a bit primitive, and is for most will be a hackable example rath
      
    You'll also need to install whatever compiling libraries are necessary to install xgmix by yourself
 
-#### If you do not have HRC  
-   Specify your own reference panel in the phasing script  
+#### If you do not have HRC reference panel
+   Specify your own reference panel in the phasing script. 1000G phase 3 is a good bet.
      
-#### Phase correction:  
-   Correcting phase dramatically increases computation time.  
+#### XGmix Phase correction:  
+   Correcting phase dramatically increases computation time. Time scales up dramatically with the number of reference populations.  
    If you plan to phase, set the option to phase in the job script (i.e. in the job script, where XGmix.py is called, set the <phase> option to TRUE   
    And adjust the amount of time alloted to complete this task (i.e. adjust the --time option to several hours)  
-   Time scales up dramatically with the number of reference populations  
+
 
 #### Reference panel building:  
    In the XGmix-master folder, there is a config.py file used to adjust parameter settings for XGmix. Take a look at this, consult the XGmix github for details.
