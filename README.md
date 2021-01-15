@@ -22,10 +22,16 @@ This will generate a local ancestry panel, these will have to be copied into the
      
      
 ### Other Usage Notes:  
- 
-This assumes that you have access to a SLURM computing system (eg LISA) and access to the HRC reference panel  
 
-#### If you do not have SLURM:  
+The pipeline is a bit primitive, and is probably more of an example than a push button interface
+  A) jobs are not automatically resubmitted if failed.  
+  B) There is no job dependency programmed in, you have to manually check if a job finished before proceeding to the next step  
+  C) You will have to go into the job scripts to set certain paths
+  
+#### SLURM: 
+ This assumes that you have access to a SLURM computing system (eg LISA) and access to the HRC reference panel  
+
+##### If you do not have SLURM:  
    Run the contents of the job script commands in the shell. Because chromosomes are by default indexed by the array index number, you will have to create a for loop to replace the array indexing variable. ie. 
      
      for (SLURM_ARRAY_TASK_ID in seq 1 1 22) ; do ... job script contents ... ; done  ;  
@@ -34,10 +40,6 @@ This assumes that you have access to a SLURM computing system (eg LISA) and acce
 
 #### If you do not have HRC  
    Specify your own reference panel in the phasing script  
-
-#### This pipeline is a bit primitive:  
-   A) jobs are not automatically resubmitted if failed.  
-   B) There is no job dependency programmed in, you have to manually check if a job finished before proceeding to the next step  
      
 #### Phase correction:  
    Correcting phase dramatically increases computation time.  
