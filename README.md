@@ -1,4 +1,4 @@
-# tractor_haul
+# Tractor HAUL
 Implementation of Tractor local ancestry pipeline not relying on HAIL  
 last rev Jan 15, 2021
 
