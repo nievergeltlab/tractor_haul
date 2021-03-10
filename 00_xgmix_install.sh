@@ -9,7 +9,7 @@
  make install
  
 #Make a directory where the analysis will go
-$WORKING_DIR=
+WORKING_DIR=
 mkdir $WORKING_DIR
 
 #call into it
