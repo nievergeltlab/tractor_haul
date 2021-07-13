@@ -7,4 +7,5 @@ do
  /home/czai/libraries/bcftools/bin/bcftools view -Oz -S /home/czai/ancestry/1kg_hgdp/pgcptsdrefpops.subjects /home/czai/ancestry/1kg_hgdp/1kg_hgdp_short_chr"$chr".vcf.gz > /home/czai/ancestry/1kg_hgdp/1kg_hgdp_refpanel_chr"$chr".vcf.gz
  done
  
+ #Example code: If you really don't want the chr prefix on your reference data:
  zcat /home/czai/ancestry/1kg_hgdp/1kg_hgdp_refpanel_chr"$chr".vcf.gz | awk '{gsub(/^chr/,""); print}'  | gzip > /home/czai/ancestry/1kg_hgdp/1kg_hgdp_refpanel_chr"$chr".vcf.gz2
