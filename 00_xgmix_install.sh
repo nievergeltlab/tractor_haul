@@ -24,6 +24,7 @@ cd $WORKING_DIR
  module load 2019
  module load OpenMPI/3.1.4-GCC-8.3.0
  module load Python/3.6.6-intel-2019b
+ #May need CMAKE GCC -  module load Boost.Python/1.72.0-gompi-2020a  CMake/3.16.4-GCCcore-9.3.0
 
 #Download XGmix
  wget https://github.com/AI-sandbox/XGMix/archive/master.zip
