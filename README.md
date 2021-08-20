@@ -17,8 +17,8 @@ Other:
 
 ## Usage  
 ### 1) Edit .env
-Set WORKING_DIR to directory to install xgmix and run the ancestry pipeline inside
-  - this directory must have thousand genomes reference vcf's in the same build as the study data
+Set WORKING_DIR to the absolute path of the directory to run the ancestry pipeline inside
+  - this directory must have thousand genomes reference vcf's in the same build as the study data, inside a folder named `1kg_hgdp`, with each file being `1kg_hgdp_short_chr{chr}.vcf.gz`
 
 ### 2) Install XGmix
 ```
@@ -27,20 +27,25 @@ bash 00_xgmix_install.sh
 
 ### 3) Prepare for training
 
+#### Get ambiguous SNPs
+```
+bash 00a_get_ambiguous_snps.sh
+```
+
 #### Split data file by chromosome
 ```
-export $(cat .env | xargs); sbatch --array=1-22 --time=00:35:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  00a_split_by_chr.sh -D $WORKING_DIR
+export $(cat .env | xargs); sbatch --array=1-22 --time=00:35:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  00b_split_by_chr.sh -D $WORKING_DIR
 ```
 
 #### Phase chromosome vcf files
 WAIT FOR ABOVE TO FINISH, then:
 ```
-export $(cat .env | xargs); sbatch --array=1-22 --time=12:00:00 --error $WORKING_DIR/errandout/${study}/phasing/phase_%a.e --output $WORKING_DIR/errandout/${study}/phasing/phase_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  00b_phasing.sh -D $WORKING_DIR
+export $(cat .env | xargs); sbatch --array=1-22 --time=12:00:00 --error $WORKING_DIR/errandout/${study}/phasing/phase_%a.e --output $WORKING_DIR/errandout/${study}/phasing/phase_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  00c_phasing.sh -D $WORKING_DIR
 ```
 
 #### Subset 1000 genomes reference data
 ```
-bash 00c_subset_reference_panel.sh
+bash 00d_subset_reference_panel.sh
 ```
 
 ### 4) Run training
@@ -69,14 +74,25 @@ WAIT FOR PREDICTION MODEL RUNNING TO FINISH, then:
 bash 03a_merge_chr_blocks.sh
 ```
 
+#### Clean directories of split data (to save disk space, because next step will use a lot of disk space)
+```
+bash 03b_clean_directories.sh
+```
+
 #### local ancestry expansion
 ```
-export $(cat .env | xargs); sbatch --array=22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03b_run_lanc_expansion.sh -D $WORKING_DIR
+export $(cat .env | xargs); sbatch --array=22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03c_run_lanc_expansion.sh -D $WORKING_DIR
 ```
 
 ### 7) Plot local ancestry predictions
 ```
 export $(cat .env | xargs); sbatch --time=12:00:00 --error ${WORKING_DIR}/errandout/${study}/plotting/plot_all.e --output ${WORKING_DIR}/errandout/${study}/plotting/plot_all.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  04a_run_lanc_plotting.sh -D $WORKING_DIR
+```
+
+### 8) Run plink covariate (using ancestries) regression
+```
+export $(cat .env | xargs); sbatch --array=22 --time=24:00:00 --error ${WORKING_DIR}/errandout/${study}/regression/regression_%a.e --output ${WORKING_DIR}/errandout/${study}/regression/regression_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  05_run_plink_glm.sh -D $WORKING_DIR
+
 ```
 
 ### Other Usage Notes:  
