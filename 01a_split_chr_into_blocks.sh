@@ -15,4 +15,4 @@ for ((i = 0; i < len; i += 50)); do
   zcat $REFDIR/1kg_hgdp_refpanel_chr${chr}.vcf.gz | awk -v begin=$begin -v end=$end '{if(/^#/ || $1 == "#CHROM" || ($2 >= begin * 1e6 && $2 <= end * 1e6)){print }}' | gzip -c > $REFDIR/1kg_hgdp_refpanel_chr${chr}_${i}.vcf.gz
 done
 
-# export $(cat .env | xargs); sbatch --array=1-22 --time=01:00:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  01a_split_chr_into_blocks.sh -D $WORKING_DIR
+# export $(cat .env | xargs); sbatch --array=22 --time=01:00:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks_%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  01a_split_chr_into_blocks.sh -D $WORKING_DIR

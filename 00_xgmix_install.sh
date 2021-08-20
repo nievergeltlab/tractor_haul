@@ -2,7 +2,7 @@
 # install libarchive dependency for xgmix
 mkdir $HOME/libraries
 
-# get WORKING_DIR and study variables
+# get env variables
 export $(cat .env | xargs)
 
 mkdir ${WORKING_DIR}/models # For trained models
@@ -10,6 +10,7 @@ mkdir ${WORKING_DIR}/predictions # For ancestry predictions
 mkdir ${WORKING_DIR}/plots # For local ancestry karyoplots
 mkdir ${WORKING_DIR}/recombination_maps # For recombination maps
 mkdir ${WORKING_DIR}/lanc_expansion # For expanding output
+mkdir ${WORKING_DIR}/plink_input # For plink input files
 # data directories
 mkdir -p ${WORKING_DIR}/${study}/phased
 mkdir -p ${WORKING_DIR}/${study}/unphased
@@ -19,6 +20,7 @@ mkdir -p ${WORKING_DIR}/errandout/${study}/training
 mkdir -p ${WORKING_DIR}/errandout/${study}/running
 mkdir -p ${WORKING_DIR}/errandout/${study}/expansion
 mkdir -p ${WORKING_DIR}/errandout/${study}/splitting
+mkdir -p ${WORKING_DIR}/errandout/${study}/regression
 
 echo "Installing libarchive..."
 wget https://www.libarchive.org/downloads/libarchive-3.4.3.tar.gz
@@ -36,6 +38,20 @@ cd bcftools-1.13
 ./configure --prefix=$HOME/libraries
 make
 make install
+
+echo "Installing plink..."
+cd $HOME/libraries
+mkdir bin
+cd bin
+wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20210606.zip
+unzip plink_linux_x86_64_20210606.zip
+rm plink_linux_x86_64_20210606.zip
+export PATH=$PATH:$HOME/libraries/bin
+
+echo "Installing plink2..."
+wget https://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.zip
+unzip plink2_linux_x86_64.zip
+rm plink2_linux_x86_64.zip
 
 # call into working dir
 cd $WORKING_DIR

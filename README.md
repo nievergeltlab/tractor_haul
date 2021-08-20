@@ -1,17 +1,19 @@
 # Tractor HAUL
 Implementation of Tractor local ancestry pipeline not relying on HAIL  
-last rev Jan 15, 2021
+Revised Aug 17, 2021 - Michael
 
 ## Prerequisites
 Libraries:
 - plink
 - eagle
+
 Other:
 - Supercomputer with SLURM workload manager
 - Directory containing 1000 genomes reference data in a folder named `1kg_hgdp`
 - Working directory path assigned to `WORKING_DIR` variable and study name assigned to `study` variable in the .env file
 - A txt file containing subjects to use as the reference panel from the 1000 genomes reference data in the `1kg_hgdp` folder, with the path assigned to `ref_subjects` in the .env file
 - A .bed, .bim, .fam file containing genetic data of chromosomes 1-22 for the study, with the path and prefix assigned to `input_data` in the .env file (e.g. if your files are in /home/user/data and they are named mystudy.bed, mystudy.bim, mystudy.fam, then you would set `input_data=/home/user/data/mystudy`)
+- A .fam file, with phenotype information (could be the same file used from above, but with .fam extension), and column order [FID, IID, PAT, MAT, SEX, PHENO1] (no header), with the path assigned to `fam_file` in the .env file
 
 ## Usage  
 ### 1) Edit .env

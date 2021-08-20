@@ -1,6 +1,7 @@
 #All subjects in reference panel file must be described in the populations origins file
 #This means that ONLY the subjects who you want to be references should be in the reference file!
 
+# get env variables
 export $(cat .env | xargs)
 for chr in {1..22}
 do

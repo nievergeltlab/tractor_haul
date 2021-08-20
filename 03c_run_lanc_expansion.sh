@@ -41,7 +41,6 @@ done
 
 # pause script until all sections finish
 running=true
-echo
 while [ "$running" = true ]; do
   running=false
   for pid in "${pidarr[@]}"; do
@@ -65,12 +64,15 @@ for i in $(seq 1 $threads); do
   cat $TMPDIR/${study}_${chr}_${i}.hap1.tsv >> $hap1file
 done
 
+gzip $hap0file
+gzip $hap1file
+
 #-----------------------------------------------------------------
 #-----------split ancestry prediction data by haplotype-----------
 #-----------------------------------------------------------------
 
 datafile=$WORKING_DIR/predictions/${study}/${chr}/${study}_${chr}.msp.tsv
-headerline=2
+headerline=1
 
 # get header line, remove # from #CHROM
 tail -n+$(( headerline + 1 )) $datafile > $TMPDIR/${study}_${chr}.msp.tsv.data
@@ -80,7 +82,6 @@ head -n${headerline}  $datafile | tail -n1 | sed 's/#//g;s/n snps/nsnps/g' | awk
 
 # split into 16 processes
 datafile=$TMPDIR/${study}_${chr}.msp.tsv.data
-cp $datafile $WORKING_DIR/tmp
 threads=8
 # threads=$(( SLURM_JOB_NUM_NODES * SLURM_CPUS_ON_NODE / 2 ))
 lines_per_thread=$(wc -l $datafile | awk -v threads=$threads '{printf("%.0f\n", $0 / threads + 1)}')
@@ -90,7 +91,6 @@ for i in $(seq 1 $threads); do
   partfile=$TMPDIR/${study}_${chr}_${i}.msp.tsv
   begin=$(( ( i - 1 ) * lines_per_thread ))
   awk -v begin=$begin -v lines_per_thread=$lines_per_thread 'BEGIN{OFS="\t"} {if(NR >= begin && NR < begin + lines_per_thread) { print } }' $datafile > $partfile
-  cp $partfile $WORKING_DIR/tmp
   (awk 'BEGIN{OFS="\t"} { for(i=8; i<=NF; i+=2) {$i = ""} } 1' $partfile > \
     $TMPDIR/${study}_${chr}_${i}.hap0.msp.tsv) &
   pidarr+=("$!")
@@ -125,29 +125,38 @@ for i in $(seq 1 $threads); do
   cat $TMPDIR/${study}_${chr}_${i}.hap1.msp.tsv >> $hap1file
 done
 
+gzip $hap0file
+gzip $hap1file
+
+#-------------------------------------------------
+#-----------generate african indicators-----------
+#-------------------------------------------------
+lancfile=$LANC_DIR/predictions/${study}/${chr}/${study}_${chr}
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_0"} } else { for(i=7;i<NF;i++){ $i=($i==0) } } }1' $lancfile.hap0.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc0.hap0.msp.tsv.gz
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_0"} } else { for(i=7;i<NF;i++){ $i=($i==0) } } }1' $lancfile.hap1.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc0.hap1.msp.tsv.gz
+
+#------------------------------------------------------
+#-----------generate nat american indicators-----------
+#------------------------------------------------------
+lancfile=$LANC_DIR/predictions/${study}/${chr}/${study}_${chr}
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_1"} } else { for(i=7;i<NF;i++){ $i=($i==1) } } }1' $lancfile.hap0.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc1.hap0.msp.tsv.gz
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_1"} } else { for(i=7;i<NF;i++){ $i=($i==1) } } }1' $lancfile.hap1.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc1.hap1.msp.tsv.gz
+
 #--------------------------------------------------
 #-----------generate european indicators-----------
 #--------------------------------------------------
 lancfile=$LANC_DIR/predictions/${study}/${chr}/${study}_${chr}
-awk 'BEGIN{OFS="\t"}{if (NR > 1) { for(i=7;i<NF;i++){ $i=($i==2) } } }1' $lancfile.hap0.msp.tsv > \
-  $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc2.hap0.msp.tsv
-awk 'BEGIN{OFS="\t"}{if (NR > 1) { for(i=7;i<NF;i++){ $i=($i==2) } } }1' $lancfile.hap1.msp.tsv > \
-  $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc2.hap1.msp.tsv
-
-#----------------------------------------------------------------------
-#-----------generate african & american covariate indicators-----------
-#----------------------------------------------------------------------
-awk 'BEGIN{OFS="\t"}{if (NR > 1) { for(i=7;i<NF;i++){ $i=($i==0 || $i==1) } } }1' $lancfile.hap0.msp.tsv > \
-  $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc0.anc1.hap0.msp.tsv
-awk 'BEGIN{OFS="\t"}{if (NR > 1) { for(i=7;i<NF;i++){ $i=($i==0 || $i==1) } } }1' $lancfile.hap1.msp.tsv > \
-  $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc0.anc1.hap1.msp.tsv
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_2"} } else { for(i=7;i<NF;i++){ $i=($i==2) } } }1' $lancfile.hap0.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc2.hap0.msp.tsv.gz
+awk 'BEGIN{OFS="\t"}{if (NR == 1) { for(i=7;i<NF;i++){ $i=$i"_2"} } else { for(i=7;i<NF;i++){ $i=($i==2) } } }1' $lancfile.hap1.msp.tsv | \
+  gzip -c > $LANC_DIR/indicators/${study}/${chr}/${study}_${chr}.anc2.hap1.msp.tsv.gz
 
 # local ancestry calculation
 python3 03_lanc_expansion.py ${WORKING_DIR} ${study} ${chr}
 
-#run plink
-# plink2 --import-dosage ${LANC_DIR}/lanctotals/${study}/${chr}/${study}_${chr_num}.total.anc2.msp.tsv format=1 noheader \
-#  --fam ${WORKING_DIR}/pts_mrsc_mix_am-qc.fam  --glm local-covar=${LANC_DIR}/lanctotals/${study}/${chr}/${study}_${chr_num}.total.anc0.anc1.msp.tsv \
-#  local-pos-cols=1,2,3,6 --out ${LANC_DIR}/plink_output/${study}/${chr}/${study}_${chr}_lanc
 
-# export $(cat .env | xargs); sbatch --array=22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03b_run_lanc_expansion.sh -D $WORKING_DIR
+# export $(cat .env | xargs); sbatch --array=1-22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03c_run_lanc_expansion.sh -D $WORKING_DIR

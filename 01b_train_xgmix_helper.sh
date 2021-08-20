@@ -1,5 +1,5 @@
 #!/bin/bash
-# get WORKING_DIR and study variables
+# get env variables
 export $(cat .env | xargs)
 lens=(249 242 198 190 182 170 159 145 138 134 135 133 114 107 102 90 83 80 59 64 47 51)
 for chr in {1..22}; do
