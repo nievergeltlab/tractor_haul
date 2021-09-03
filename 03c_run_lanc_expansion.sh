@@ -64,8 +64,8 @@ for i in $(seq 1 $threads); do
   cat $TMPDIR/${study}_${chr}_${i}.hap1.tsv >> $hap1file
 done
 
-gzip $hap0file
-gzip $hap1file
+gzip -f $hap0file
+gzip -f $hap1file
 
 #-----------------------------------------------------------------
 #-----------split ancestry prediction data by haplotype-----------
@@ -125,8 +125,8 @@ for i in $(seq 1 $threads); do
   cat $TMPDIR/${study}_${chr}_${i}.hap1.msp.tsv >> $hap1file
 done
 
-gzip $hap0file
-gzip $hap1file
+gzip -f $hap0file
+gzip -f $hap1file
 
 #-------------------------------------------------
 #-----------generate african indicators-----------

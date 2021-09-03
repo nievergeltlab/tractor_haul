@@ -2,23 +2,30 @@
 Implementation of Tractor local ancestry pipeline not relying on HAIL  
 Revised Aug 17, 2021 - Michael
 
+Uses [XGMix](https://github.com/AI-sandbox/XGMix) for local ancestry inference
+
 ## Prerequisites
 Libraries:
-- plink
+- plink (1.9)
+- plink2
 - eagle
+- shapeit
+
+Note all of these libraries must be available in your path, they are all installed by `00_xgmix_install.sh`, but make sure to double check that installations worked properly
 
 Other:
 - Supercomputer with SLURM workload manager
-- Directory containing 1000 genomes reference data in a folder named `1kg_hgdp`
 - Working directory path assigned to `WORKING_DIR` variable and study name assigned to `study` variable in the .env file
-- A txt file containing subjects to use as the reference panel from the 1000 genomes reference data in the `1kg_hgdp` folder, with the path assigned to `ref_subjects` in the .env file
+- Directory containing reference data in a folder, with the path to the folder assigned to `REF_DIR` in the .env file, with reference data for each chromosome in files named as `refpanel_chr${CHR}.vcf.gz`, where ${CHR} is the chromosome number (1-22, this has not been tested on X)
+- A txt file containing subjects to use as the reference panel from the reference data, with the path assigned to `ref_subjects` in the .env file
 - A .bed, .bim, .fam file containing genetic data of chromosomes 1-22 for the study, with the path and prefix assigned to `input_data` in the .env file (e.g. if your files are in /home/user/data and they are named mystudy.bed, mystudy.bim, mystudy.fam, then you would set `input_data=/home/user/data/mystudy`)
 - A .fam file, with phenotype information (could be the same file used from above, but with .fam extension), and column order [FID, IID, PAT, MAT, SEX, PHENO1] (no header), with the path assigned to `fam_file` in the .env file
 
 ## Usage  
 ### 1) Edit .env
-Set WORKING_DIR to the absolute path of the directory to run the ancestry pipeline inside
-  - this directory must have thousand genomes reference vcf's in the same build as the study data, inside a folder named `1kg_hgdp`, with each file being `1kg_hgdp_short_chr{chr}.vcf.gz`
+- Set WORKING_DIR to the absolute path of the directory to run the ancestry pipeline inside
+- Set REF_DIR to the absolute path of the directory with the reference VCF files, split by chromosome, with each file named `refpanel_chr${CHR}.vcf.gz`, where ${CHR} is the chromosome number (1-22, this has not been tested on X)
+    - Note that these reference subjects should contain most of the SNPs contained in the sample data you plan to run local ancestry inference (LAI) on.
 
 ### 2) Install XGmix
 ```
@@ -32,20 +39,14 @@ bash 00_xgmix_install.sh
 bash 00a_get_ambiguous_snps.sh
 ```
 
-#### Split data file by chromosome
-```
-export $(cat .env | xargs); sbatch --array=1-22 --time=00:35:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  00b_split_by_chr.sh -D $WORKING_DIR
-```
-
 #### Phase chromosome vcf files
-WAIT FOR ABOVE TO FINISH, then:
 ```
 export $(cat .env | xargs); sbatch --array=1-22 --time=12:00:00 --error $WORKING_DIR/errandout/${study}/phasing/phase_%a.e --output $WORKING_DIR/errandout/${study}/phasing/phase_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  00c_phasing.sh -D $WORKING_DIR
 ```
 
-#### Subset 1000 genomes reference data
+#### Subset 1000 genomes/HGDP reference data
 ```
-bash 00d_subset_reference_panel.sh
+bash 00c_subset_reference_panel.sh
 ```
 
 ### 4) Run training
@@ -54,6 +55,8 @@ bash 00d_subset_reference_panel.sh
 ```
 export $(cat .env | xargs); sbatch --array=1-22 --time=01:00:00 --error ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks_%a.e --output ${WORKING_DIR}/errandout/${study}/splitting/split_into_blocks%a.o  --export=ALL,WORKING_DIR=$WORKING_DIR,study=$study  01a_split_chr_into_blocks.sh -D $WORKING_DIR
 ```
+
+- Note: this step will split each chromosome (both the study data and the reference data) into 50 megabase blocks, with 5 megabase buffers before and after the start/end positions. For example, the file named study_phased_chr1_50.vcf.gz will be used to predict the 50MB - 100MB block, but contains data from 45MB - 105MB in order to make sure the ancestry predictions for the areas around the 50MB/100MB ends stay relatively accurate
 
 #### Run training
 ```
@@ -81,7 +84,7 @@ bash 03b_clean_directories.sh
 
 #### local ancestry expansion
 ```
-export $(cat .env | xargs); sbatch --array=22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03c_run_lanc_expansion.sh -D $WORKING_DIR
+export $(cat .env | xargs); sbatch --array=1-22 --time=12:00:00 --ntasks=1 --cpus-per-task=16 --error ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.e --output ${WORKING_DIR}/errandout/${study}/expansion/lanc_expansion_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  03c_run_lanc_expansion.sh -D $WORKING_DIR
 ```
 
 ### 7) Plot local ancestry predictions
@@ -89,19 +92,25 @@ export $(cat .env | xargs); sbatch --array=22 --time=12:00:00 --ntasks=1 --cpus-
 export $(cat .env | xargs); sbatch --time=12:00:00 --error ${WORKING_DIR}/errandout/${study}/plotting/plot_all.e --output ${WORKING_DIR}/errandout/${study}/plotting/plot_all.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  04a_run_lanc_plotting.sh -D $WORKING_DIR
 ```
 
+### 8)) Run models with adjusted parameters to find best models
+```
+export $(cat .env | xargs); sbatch --time=2-12 --error ${WORKING_DIR}/errandout/${study}/changed_models/changed_models.e --output ${WORKING_DIR}/errandout/${study}/changed_models/changed_models.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR 05_run_changed_models.sh -D $WORKING_DIR
+```
+
+- Note this only runs on chromosome 22, then can compare resulting predictions files against each other to determine most fitting model (especially check that XGMix is not biasing towards EUR ancestry)
+
 ### 8) Run plink covariate (using ancestries) regression
 ```
-export $(cat .env | xargs); sbatch --array=22 --time=24:00:00 --error ${WORKING_DIR}/errandout/${study}/regression/regression_%a.e --output ${WORKING_DIR}/errandout/${study}/regression/regression_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  05_run_plink_glm.sh -D $WORKING_DIR
+export $(cat .env | xargs); sbatch --array=1-22 --time=24:00:00 --error ${WORKING_DIR}/errandout/${study}/regression/regression_%a.e --output ${WORKING_DIR}/errandout/${study}/regression/regression_%a.o  --export=ALL,study=$study,WORKING_DIR=$WORKING_DIR  06_run_plink_glm.sh -D $WORKING_DIR
 
 ```
 
-### Other Usage Notes:  
+## Other Usage Notes:  
 
 The pipeline is a bit primitive, and for most will be a hackable example rather than a perfect out-of-the-box implementation
 
   A) jobs are not automatically resubmitted if failed.  
   B) There is no job dependency programmed in, you have to manually check if a job finished before proceeding to the next step  
-  C) You will have to go into the job scripts to set certain paths
 
 #### SLURM:
  This assumes that you have access to a SLURM computing system (eg LISA)
@@ -122,7 +131,3 @@ The pipeline is a bit primitive, and for most will be a hackable example rather 
    Correcting phase dramatically increases computation time. Time scales up dramatically with the number of reference populations.  
    If you plan to phase, set the option to phase in the job script (i.e. in the job script, where XGmix.py is called, set the <phase> option to TRUE   
    And adjust the amount of time alloted to complete this task (i.e. adjust the --time option to several hours)  
-
-
-#### Reference panel building:  
-   In the XGmix-master folder, there is a config.py file used to adjust parameter settings for XGmix. Take a look at this, consult the XGmix github for details.

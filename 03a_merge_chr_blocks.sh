@@ -3,12 +3,12 @@
 # get env variables
 export $(cat .env | xargs)
 # chromosome lengths in mega-basepairs
-lens=(249 242 198 190 182 170 159 145 138 134 135 133 114 107 102 90 83 80 59 64 47 51)
+CHR_LENS=(249 242 198 190 182 170 159 145 138 134 135 133 114 107 102 90 83 80 59 64 47 51)
 for chr in {1..22}; do
   mkdir -p $WORKING_DIR/predictions/$study/$chr
   outfile=$WORKING_DIR/predictions/$study/$chr/${study}_${chr}.msp.tsv
   head -n 2 $WORKING_DIR/predictions/$study/${chr}_0/${study}_${chr}_0.msp.tsv | tail -n 1 > $outfile
-  len=$(( ${lens[chr-1]} + 1 ))
+  len=$(( ${CHR_LENS[chr-1]} + 1 ))
   for ((i = 0; i <= len; i += 50)); do
     end=$(( i + 50 ))
     file=$WORKING_DIR/predictions/$study/${chr}_${i}/${study}_${chr}_${i}.msp.tsv

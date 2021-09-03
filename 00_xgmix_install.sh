@@ -16,10 +16,11 @@ mkdir -p ${WORKING_DIR}/${study}/phased
 mkdir -p ${WORKING_DIR}/${study}/unphased
 # error and output directories
 mkdir -p ${WORKING_DIR}/errandout/${study}/phasing
+mkdir -p ${WORKING_DIR}/errandout/${study}/splitting
 mkdir -p ${WORKING_DIR}/errandout/${study}/training
 mkdir -p ${WORKING_DIR}/errandout/${study}/running
 mkdir -p ${WORKING_DIR}/errandout/${study}/expansion
-mkdir -p ${WORKING_DIR}/errandout/${study}/splitting
+mkdir -p ${WORKING_DIR}/errandout/${study}/changed_models
 mkdir -p ${WORKING_DIR}/errandout/${study}/regression
 
 echo "Installing libarchive..."
@@ -53,6 +54,13 @@ wget https://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.zip
 unzip plink2_linux_x86_64.zip
 rm plink2_linux_x86_64.zip
 
+echo "Instaling shapeit v2..."
+wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.17.linux.tar.gz
+tar -xzf shapeit.v2.r904.glibcv2.17.linux.tar.gz
+mv shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit .
+rm shapeit.v2.r904.glibcv2.17.linux.tar.gz
+rm -r shapeit.v2.904.3.10.0-693.11.6.el7.x86_64
+
 # call into working dir
 cd $WORKING_DIR
 
@@ -72,6 +80,9 @@ wget https://github.com/AI-sandbox/XGMix/archive/master.zip
 unzip master.zip
 
 cd XGMix-master
+
+# Backup config
+cp config.py config-backup.py
 
 # Need to add seaborn==0.11.0 to the requirements.txt
 echo "seaborn==0.11.0" >> requirements.txt
